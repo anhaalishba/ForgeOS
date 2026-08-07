@@ -5,7 +5,6 @@ import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Department from "./pages/Department";
-import ProjectManager from "./pages/ProjectManager";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<boolean | null>(null);
@@ -57,14 +56,6 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Department />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/project-manager"
-          element={
-            <ProtectedRoute>
-              <ProjectManager />
             </ProtectedRoute>
           }
         />

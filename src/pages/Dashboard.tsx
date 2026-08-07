@@ -86,38 +86,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* AI Project Manager CTA */}
-      <Link
-        to="/project-manager"
-        className="block mb-10 group"
-      >
-        <div className="relative rounded-2xl p-6 bg-surface border border-border overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
-          {/* Background glow */}
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-[#8B5CF6]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <div className="relative flex items-center gap-5">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15 transition-colors duration-300">
-              <Sparkles size={24} className="text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-heading text-base text-foreground flex items-center gap-2">
-                AI Project Manager
-                <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold">
-                  New
-                </span>
-              </h3>
-              <p className="text-sm text-muted mt-0.5">
-                Enter one business goal and let AI coordinate every department automatically. No need to pick a team — we'll figure it out.
-              </p>
-            </div>
-            <div className="flex-shrink-0 text-muted group-hover:text-primary transition-colors duration-200">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-      </Link>
-
       {/* Dept Grid */}
       <h2 className="font-heading text-lg text-foreground mb-4">Departments</h2>
 
