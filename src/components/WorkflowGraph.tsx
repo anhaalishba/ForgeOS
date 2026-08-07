@@ -103,11 +103,9 @@ export default function WorkflowGraph({
             <motion.div
               key={dept.slug}
               className="absolute w-px h-4 bg-border top-4"
-              style={{ left: `${pct}%` }}
               initial={{ scaleY: 0 }}
               animate={{ scaleY: pmStatus === "done" ? 1 : 0 }}
               transition={{ duration: 0.2, delay: 0.2 + i * 0.05 }}
-              // @ts-expect-error originY is a style prop
               style={{ left: `${pct}%`, transformOrigin: "top" }}
             />
           );
