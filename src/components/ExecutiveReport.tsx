@@ -84,14 +84,9 @@ export default function ExecutiveReport({ content }: ExecutiveReportProps) {
           </button>
           <button
             onClick={handleDownloadPDF}
-            disabled={pdfLoading}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs text-muted hover:text-foreground hover:bg-surface transition-colors duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs text-muted hover:text-foreground hover:bg-surface transition-colors duration-200 cursor-pointer"
           >
-            {pdfLoading ? (
-              <Loader2 size={12} className="animate-spin" />
-            ) : (
-              <Download size={12} />
-            )}
+            <Download size={12} />
             PDF
           </button>
         </div>
