@@ -5,12 +5,14 @@ interface GoalInputProps {
   departmentColor: string;
   onSubmit: (goal: string) => Promise<void>;
   disabled?: boolean;
+  placeholder?: string;
 }
 
 export default function GoalInput({
   departmentColor,
   onSubmit,
   disabled,
+  placeholder = "Describe what you want your team to accomplish...",
 }: GoalInputProps) {
   const [goal, setGoal] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,7 +35,7 @@ export default function GoalInput({
         <textarea
           value={goal}
           onChange={(e) => setGoal(e.target.value)}
-          placeholder="Describe what you want your team to accomplish..."
+          placeholder={placeholder}
           rows={3}
           disabled={disabled || loading}
           className="w-full px-4 py-3 pr-14 rounded-xl bg-surface border border-border text-foreground placeholder:text-subtle text-sm resize-none transition-all duration-200 focus:outline-none focus:border-[var(--dept-color)] focus:ring-2 focus:ring-[var(--dept-glow)] disabled:opacity-50"

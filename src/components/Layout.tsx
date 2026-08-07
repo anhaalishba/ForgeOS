@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { LogOut, LayoutDashboard, Menu, X } from "lucide-react";
+import { LogOut, LayoutDashboard, Sparkles, Menu, X } from "lucide-react";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -45,6 +45,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <LayoutDashboard size={16} />
               Dashboard
             </Link>
+            <Link
+              to="/project-manager"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                location.pathname === "/project-manager"
+                  ? "bg-elevated text-primary"
+                  : "text-muted hover:text-foreground hover:bg-surface"
+              }`}
+            >
+              <Sparkles size={16} />
+              AI Project Manager
+            </Link>
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
@@ -76,6 +87,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             >
               <LayoutDashboard size={16} />
               Dashboard
+            </Link>
+            <Link
+              to="/project-manager"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-muted hover:text-foreground hover:bg-elevated"
+            >
+              <Sparkles size={16} />
+              AI Project Manager
             </Link>
             <div className="pt-2 border-t border-border">
               <button
