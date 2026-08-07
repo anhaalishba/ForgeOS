@@ -1,19 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { LogOut, LayoutDashboard, Building2, Menu, X } from "lucide-react";
+import { LogOut, LayoutDashboard, Menu, X } from "lucide-react";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUserEmail(data.user?.email ?? null);
-    });
-  }, []);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -52,21 +45,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <LayoutDashboard size={16} />
               Dashboard
             </Link>
-            <Link
-              to="/department/marketing"
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                location.pathname.includes("/department")
-                  ? "bg-elevated text-primary"
-                  : "text-muted hover:text-foreground hover:bg-surface"
-              }`}
-            >
-              <Building2 size={16} />
-              Departments
-            </Link>
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
-            <span className="text-sm text-muted">{userEmail}</span>
             <button
               onClick={handleSignOut}
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted hover:text-foreground transition-colors duration-200 cursor-pointer rounded-lg hover:bg-surface"
@@ -96,16 +77,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <LayoutDashboard size={16} />
               Dashboard
             </Link>
-            <Link
-              to="/department/marketing"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-muted hover:text-foreground hover:bg-elevated"
-            >
-              <Building2 size={16} />
-              Departments
-            </Link>
             <div className="pt-2 border-t border-border">
-              <span className="block px-3 py-1 text-xs text-subtle">{userEmail}</span>
               <button
                 onClick={handleSignOut}
                 className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted hover:text-foreground cursor-pointer w-full text-left"
