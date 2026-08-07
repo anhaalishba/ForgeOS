@@ -51,8 +51,7 @@ export default function Dashboard() {
           </h1>
         </div>
         <p className="text-muted text-sm max-w-xl">
-          Your AI workforce is ready. Select a department to assign goals and watch your
-          agents collaborate in real-time.
+          your ai workforce
         </p>
       </div>
 
