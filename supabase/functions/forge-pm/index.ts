@@ -20,6 +20,23 @@ interface PmAnalysisOutput {
   cross_department_dependencies: string;
 }
 
+// ─── Validation helpers ────────────────────────────────────────────────
+
+function isValidUUID(str: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
+
+function formatSupabaseError(err: unknown): string {
+  if (!err) return "Unknown database error";
+  if (typeof err === "string") return err;
+  const e = err as Record<string, unknown>;
+  if (e.message) return String(e.message);
+  if (e.details) return String(e.details);
+  if (e.hint) return String(e.hint);
+  if (e.code) return `Database error code: ${e.code}`;
+  return JSON.stringify(err);
+}
+
 // ─── PM System Prompt ──────────────────────────────────────────────────
 
 const PM_SYSTEM_PROMPT = `You are the **Project Manager Agent** for ForgeOS, an AI workforce platform. Your job: analyze a business goal and produce a structured execution plan that distributes work across specialized departments.
@@ -277,22 +294,48 @@ Deno.serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
 
+    // ── Pre-flight: Resolve project and user ───────────────────────────
+
+    console.log("[forge-pm] Step 0: Looking up project", projectId);
+
+    const { data: project, error: projectError } = await supabase
+      .from("projects")
+      .select("id, user_id, goal")
+      .eq("id", projectId)
+      .single();
+
+    if (projectError || !project) {
+      console.error("[forge-pm] Project lookup failed:", formatSupabaseError(projectError));
+      return new Response(
+        JSON.stringify({ success: false, error: `Project not found: ${formatSupabaseError(projectError)}` }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = project.user_id;
+    console.log("[forge-pm] Project found, user_id:", userId);
+
     const logEvent = async (
       eventType: string,
       message: string,
       departmentId?: string,
     ) => {
-      await supabase.from("project_events").insert({
+      console.log(`[forge-pm] Event: [${eventType}] ${message}`);
+      const { error: evtErr } = await supabase.from("project_events").insert({
         project_id: projectId,
         event_type: eventType,
         message,
         department_id: departmentId || null,
       });
+      if (evtErr) {
+        console.error("[forge-pm] Failed to log event:", formatSupabaseError(evtErr));
+      }
     };
 
     // ── Phase 1: Analyze goal ──────────────────────────────────────
 
     await logEvent("planning", "Project Manager analyzing goal...");
+    console.log("[forge-pm] Step 1: Analyzing goal");
     await supabase.from("projects").update({ status: "planning" }).eq("id", projectId);
 
     let plan: PmAnalysisOutput;
@@ -325,29 +368,30 @@ Deno.serve(async (req: Request) => {
         });
 
         if (!planRes.ok) {
-          console.error(`PM plan OpenAI error: ${planRes.status}`);
+          console.error(`[forge-pm] PM plan OpenAI error: ${planRes.status}`);
           plan = planFallback;
         } else {
           const planJson = await planRes.json();
           const raw = planJson.choices?.[0]?.message?.content?.trim() || "";
           try {
-            // Try to extract JSON from possible markdown fences
             const jsonMatch = raw.match(/\{[\s\S]*\}/);
             plan = jsonMatch ? JSON.parse(jsonMatch[0]) : planFallback;
           } catch {
-            console.error("Failed to parse PM plan JSON, using fallback");
+            console.error("[forge-pm] Failed to parse PM plan JSON, using fallback");
             plan = planFallback;
           }
         }
       } catch (err) {
-        console.error("PM plan fetch failed:", err);
+        console.error("[forge-pm] PM plan fetch failed:", err);
         plan = planFallback;
       }
     } else {
+      console.log("[forge-pm] No OPENAI_API_KEY — using fallback plan");
       plan = planFallback;
     }
 
     await logEvent("planning", `Execution plan: ${plan.departments.length} departments identified`);
+    console.log("[forge-pm] Plan departments:", plan.departments.map((d) => d.department_slug).join(", "));
 
     // Validate departments against known slugs
     const validSlugs = ["marketing", "sales", "finance", "hr"];
@@ -356,6 +400,7 @@ Deno.serve(async (req: Request) => {
     );
 
     if (validDepartments.length === 0) {
+      console.error("[forge-pm] No valid departments identified");
       await supabase.from("projects").update({ status: "failed" }).eq("id", projectId);
       await logEvent("failed", "No valid departments identified for this goal");
       return new Response(
@@ -366,19 +411,24 @@ Deno.serve(async (req: Request) => {
 
     // ── Phase 2: Resolve departments from slugs ────────────────────
 
+    console.log("[forge-pm] Step 2: Resolving departments from slugs");
+
     const { data: deptData, error: deptError } = await supabase
       .from("departments")
       .select("id, slug, name")
       .in("slug", validDepartments.map((d) => d.department_slug.toLowerCase()));
 
     if (deptError || !deptData?.length) {
-      console.error("Failed to fetch departments:", deptError);
+      console.error("[forge-pm] Failed to fetch departments:", formatSupabaseError(deptError));
       await supabase.from("projects").update({ status: "failed" }).eq("id", projectId);
+      await logEvent("failed", `Failed to resolve departments: ${formatSupabaseError(deptError)}`);
       return new Response(
         JSON.stringify({ success: false, error: "Failed to resolve departments" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log("[forge-pm] Resolved departments:", deptData.map((d) => d.slug).join(", "));
 
     const slugToDept = new Map(deptData.map((d) => [d.slug.toLowerCase(), d]));
 
@@ -404,16 +454,54 @@ Deno.serve(async (req: Request) => {
     }
 
     const projectDepts: ProjectDeptEntry[] = [];
+    const failedDepts: Array<{ name: string; error: string }> = [];
 
     for (let i = 0; i < orderedPlans.length; i++) {
       const dp = orderedPlans[i];
       const dept = slugToDept.get(dp.department_slug.toLowerCase());
-      if (!dept) continue;
 
-      // Create task
+      if (!dept) {
+        const msg = `Department slug "${dp.department_slug}" not found in database`;
+        console.error(`[forge-pm] ${msg}`);
+        await logEvent("failed", msg);
+        failedDepts.push({ name: dp.department_slug, error: msg });
+        continue;
+      }
+
+      // Validate IDs before insert
+      if (!isValidUUID(dept.id)) {
+        const msg = `Invalid department UUID: ${dept.id}`;
+        console.error(`[forge-pm] ${msg}`);
+        await logEvent("failed", msg, dept.id);
+        failedDepts.push({ name: dept.name, error: msg });
+        continue;
+      }
+
+      if (!isValidUUID(projectId)) {
+        const msg = `Invalid project UUID: ${projectId}`;
+        console.error(`[forge-pm] ${msg}`);
+        await logEvent("failed", msg, dept.id);
+        failedDepts.push({ name: dept.name, error: msg });
+        continue;
+      }
+
+      if (!isValidUUID(userId)) {
+        const msg = `Invalid user UUID: ${userId}`;
+        console.error(`[forge-pm] ${msg}`);
+        await logEvent("failed", msg, dept.id);
+        failedDepts.push({ name: dept.name, error: msg });
+        continue;
+      }
+
+      // ── Create task ───────────────────────────────────────────
+
+      console.log(`[forge-pm] Step 3a: Creating task for ${dept.name} (user_id=${userId}, dept_id=${dept.id})`);
+      await logEvent("started", `Creating ${dept.name} task...`, dept.id);
+
       const { data: task, error: taskError } = await supabase
         .from("tasks")
         .insert({
+          user_id: userId,
           department_id: dept.id,
           goal: dp.sub_goal,
           status: "in_progress",
@@ -422,35 +510,71 @@ Deno.serve(async (req: Request) => {
         .single();
 
       if (taskError || !task) {
-        console.error(`Failed to create task for ${dept.name}:`, taskError);
-        await logEvent("failed", `Failed to create task for ${dept.name}`, dept.id);
+        const errMsg = formatSupabaseError(taskError);
+        console.error(`[forge-pm] FAILED to create task for ${dept.name}:`, errMsg);
+        await logEvent("failed", `Failed to create task for ${dept.name}: ${errMsg}`, dept.id);
+        failedDepts.push({ name: dept.name, error: errMsg });
         continue;
       }
 
-      // Get agents
+      console.log(`[forge-pm] Task created: ${task.id}`);
+      await logEvent("started", `${dept.name} task created (${task.id})`, dept.id);
+
+      // ── Fetch agents ──────────────────────────────────────────
+
+      console.log(`[forge-pm] Step 3b: Fetching agents for ${dept.name}`);
       const { data: agents, error: agentError } = await supabase
         .from("agents")
         .select("id, name, role")
         .eq("department_id", dept.id);
 
       if (agentError || !agents?.length) {
-        console.error(`No agents for ${dept.name}:`, agentError);
+        const errMsg = agentError
+          ? formatSupabaseError(agentError)
+          : `No agents found for department ${dept.name}`;
+        console.error(`[forge-pm] Agent fetch failed for ${dept.name}:`, errMsg);
+        await logEvent("failed", `No agents available for ${dept.name}: ${errMsg}`, dept.id);
+        await supabase.from("tasks").update({ status: "failed" }).eq("id", task.id);
+        failedDepts.push({ name: dept.name, error: errMsg });
         continue;
       }
 
-      // Create task_outputs for each agent
+      console.log(`[forge-pm] Found ${agents.length} agents for ${dept.name}`);
+
+      // ── Create task_outputs for each agent ─────────────────────
+
+      console.log(`[forge-pm] Step 3c: Creating task_outputs for ${dept.name}`);
+      let outputFailures = 0;
       for (const agent of agents) {
-        await supabase.from("task_outputs").insert({
+        const { error: outputError } = await supabase.from("task_outputs").insert({
           task_id: task.id,
           agent_id: agent.id,
           agent_name: agent.name,
           agent_role: agent.role,
           status: "pending",
         });
+
+        if (outputError) {
+          outputFailures++;
+          console.error(
+            `[forge-pm] Failed to create output for agent ${agent.name}:`,
+            formatSupabaseError(outputError)
+          );
+          await logEvent(
+            "failed",
+            `Failed to create output for ${agent.name}: ${formatSupabaseError(outputError)}`,
+            dept.id
+          );
+        }
       }
 
-      // Create project_department entry
-      const { data: pd } = await supabase
+      console.log(`[forge-pm] Outputs created for ${dept.name}: ${agents.length - outputFailures}/${agents.length} OK`);
+      await logEvent("started", `${dept.name}: ${agents.length} agent outputs created`, dept.id);
+
+      // ── Create project_department entry ────────────────────────
+
+      console.log(`[forge-pm] Step 3d: Creating project_department for ${dept.name}`);
+      const { data: pd, error: pdError } = await supabase
         .from("project_departments")
         .insert({
           project_id: projectId,
@@ -461,6 +585,20 @@ Deno.serve(async (req: Request) => {
         })
         .select("id")
         .single();
+
+      if (pdError) {
+        console.error(
+          `[forge-pm] Failed to create project_department for ${dept.name}:`,
+          formatSupabaseError(pdError)
+        );
+        await logEvent(
+          "failed",
+          `Failed to link ${dept.name} to project: ${formatSupabaseError(pdError)}`,
+          dept.id
+        );
+        failedDepts.push({ name: dept.name, error: formatSupabaseError(pdError) });
+        continue;
+      }
 
       projectDepts.push({
         pdId: pd?.id || "",
@@ -474,12 +612,22 @@ Deno.serve(async (req: Request) => {
       await logEvent("started", `${dept.name} started: ${dp.sub_goal.slice(0, 80)}...`, dept.id);
     }
 
+    console.log(
+      `[forge-pm] Phase 3 complete: ${projectDepts.length} departments OK, ${failedDepts.length} failed`
+    );
+
     // ── Phase 4: Process each department's agents ─────────────────
 
+    console.log("[forge-pm] Step 4: Processing department agents");
     const allOutputs: Array<{ department: string; role: string; agent: string; content: string }> = [];
 
     for (const pd of projectDepts) {
+      console.log(`[forge-pm] Processing agents for ${pd.deptName} (${pd.agents.length} agents)`);
+
       for (const agent of pd.agents) {
+        console.log(`[forge-pm] AI generation starting for ${agent.name} (${agent.role})`);
+        await logEvent("started", `${pd.deptName} — ${agent.name} (${agent.role}) generating...`, pd.deptId);
+
         let content: string;
 
         if (openaiKey) {
@@ -502,7 +650,10 @@ Deno.serve(async (req: Request) => {
             });
 
             if (!response.ok) {
-              console.error(`OpenAI error for ${agent.role} in ${pd.deptName}: ${response.status}`);
+              const errText = await response.text();
+              console.error(
+                `[forge-pm] OpenAI error for ${agent.role} in ${pd.deptName}: ${response.status} — ${errText.slice(0, 200)}`
+              );
               content = generateFallback(agent.role, pd.subGoal);
             } else {
               const json = await response.json();
@@ -510,15 +661,17 @@ Deno.serve(async (req: Request) => {
               content = raw && raw.length > 20 ? raw : generateFallback(agent.role, pd.subGoal);
             }
           } catch (fetchErr) {
-            console.error(`OpenAI fetch failed for ${agent.role}:`, fetchErr);
+            console.error(`[forge-pm] OpenAI fetch failed for ${agent.role}:`, fetchErr);
             content = generateFallback(agent.role, pd.subGoal);
           }
         } else {
+          console.log(`[forge-pm] No OpenAI key — using fallback for ${agent.role}`);
           content = generateFallback(agent.role, pd.subGoal);
         }
 
         // Update task_output
-        await supabase
+        console.log(`[forge-pm] Updating task_output for ${agent.name}`);
+        const { error: updateError } = await supabase
           .from("task_outputs")
           .update({
             status: "completed",
@@ -527,6 +680,21 @@ Deno.serve(async (req: Request) => {
           })
           .eq("task_id", pd.taskId)
           .eq("agent_id", agent.id);
+
+        if (updateError) {
+          console.error(
+            `[forge-pm] Failed to update output for ${agent.name}:`,
+            formatSupabaseError(updateError)
+          );
+          await logEvent(
+            "failed",
+            `Failed to save ${agent.name}'s output: ${formatSupabaseError(updateError)}`,
+            pd.deptId
+          );
+        } else {
+          console.log(`[forge-pm] AI generation completed for ${agent.name}`);
+          await logEvent("completed", `${pd.deptName} — ${agent.name} completed`, pd.deptId);
+        }
 
         allOutputs.push({
           department: pd.deptName,
@@ -537,6 +705,7 @@ Deno.serve(async (req: Request) => {
       }
 
       // Mark task and project_department as completed
+      console.log(`[forge-pm] Marking task ${pd.taskId} as completed`);
       await supabase
         .from("tasks")
         .update({ status: "completed", completed_at: new Date().toISOString() })
@@ -548,11 +717,35 @@ Deno.serve(async (req: Request) => {
         .eq("id", pd.pdId);
 
       await logEvent("completed", `${pd.deptName} completed all outputs`, pd.deptId);
+      console.log(`[forge-pm] ${pd.deptName} fully completed`);
     }
 
-    // ── Phase 5: Generate Executive Summary ───────────────────────
+    // ── Phase 5: Executive Summary (only if at least one department succeeded) ──
 
-    await logEvent("summary", "Generating executive project report...");
+    console.log(
+      `[forge-pm] Phase 4 complete: ${projectDepts.length} departments processed, ${failedDepts.length} failures`
+    );
+
+    if (projectDepts.length === 0) {
+      // No departments completed — mark project as failed
+      console.error("[forge-pm] ZERO departments completed successfully. Marking project as failed.");
+      const failureSummary = failedDepts.map((f) => `${f.name}: ${f.error}`).join("; ");
+      await logEvent("failed", `No department tasks completed successfully. Failures: ${failureSummary}`);
+      await supabase.from("projects").update({ status: "failed" }).eq("id", projectId);
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "No department tasks completed successfully",
+          failures: failedDepts,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // At least one department succeeded — generate the executive report
+    console.log("[forge-pm] Step 5: Generating Executive Summary");
+    await logEvent("summary", `Generating executive project report from ${projectDepts.length} departments...`);
 
     let summaryContent = "";
     const deptContributions: Array<{ department: string; summary: string }> = [];
@@ -601,13 +794,14 @@ Deno.serve(async (req: Request) => {
           summaryContent = summaryJson.choices?.[0]?.message?.content?.trim() || "";
         }
       } catch (err) {
-        console.error("Summary generation failed:", err);
+        console.error("[forge-pm] Summary generation failed:", err);
       }
     }
 
     if (!summaryContent) {
-      // Fallback summary
-      summaryContent = `## Business Summary\nProject completed successfully across ${projectDepts.length} departments: ${projectDepts.map((p) => p.deptName).join(", ")}. Each department delivered structured, actionable outputs tailored to the goal.\n\n## Department Contributions\n${deptContributions.map((dc) => `- **${dc.department}:** ${dc.summary.slice(0, 120)}`).join("\n")}\n\n## Recommendations\n1. Review department outputs in detail\n2. Prioritize actions based on impact vs. effort\n3. Schedule cross-functional alignment meeting\n\n## Next Steps\n1. **Immediate:** Review the full report and share with stakeholders\n2. **Short-term:** Implement top-priority recommendations\n3. **Medium-term:** Track metrics and iterate`;
+      // Fallback summary — only for departments that actually succeeded
+      const deptList = projectDepts.map((p) => p.deptName).join(", ");
+      summaryContent = `## Business Summary\nProject completed successfully across ${projectDepts.length} department(s): ${deptList}. Each department delivered structured, actionable outputs tailored to the goal.\n\n## Department Contributions\n${deptContributions.map((dc) => `- **${dc.department}:** ${dc.summary.slice(0, 120)}`).join("\n")}\n\n## Recommendations\n1. Review department outputs in detail\n2. Prioritize actions based on impact vs. effort\n3. Schedule cross-functional alignment meeting\n\n## Next Steps\n1. **Immediate:** Review the full report and share with stakeholders\n2. **Short-term:** Implement top-priority recommendations\n3. **Medium-term:** Track metrics and iterate`;
     }
 
     await supabase.from("project_summary").insert({
@@ -625,16 +819,32 @@ Deno.serve(async (req: Request) => {
       completed_at: new Date().toISOString(),
     }).eq("id", projectId);
 
-    await logEvent("summary", "Executive project report ready");
+    // If some departments failed, include that in the final event
+    if (failedDepts.length > 0) {
+      await logEvent(
+        "summary",
+        `Executive report ready. ${projectDepts.length} department(s) completed, ${failedDepts.length} failed: ${failedDepts.map((f) => f.name).join(", ")}`
+      );
+    } else {
+      await logEvent("summary", "Executive project report ready — all departments completed successfully");
+    }
+
+    console.log("[forge-pm] COMPLETE — Project finished successfully");
 
     return new Response(
-      JSON.stringify({ success: true, projectId }),
+      JSON.stringify({
+        success: true,
+        projectId,
+        completedDepartments: projectDepts.length,
+        failedDepartments: failedDepts.length,
+        failures: failedDepts.length > 0 ? failedDepts : undefined,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Unexpected error:", error);
+    console.error("[forge-pm] Unexpected error:", error);
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ error: "Internal server error", detail: String(error) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

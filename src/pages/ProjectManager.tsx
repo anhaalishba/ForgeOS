@@ -169,8 +169,10 @@ export default function ProjectManager() {
 
   const summaryStatus: "pending" | "generating" | "done" =
     !summary
-      ? project?.status === "completed"
-        ? "generating"
+      ? project?.status === "completed" || project?.status === "failed"
+        ? project.status === "completed"
+          ? "generating"
+          : "pending"
         : "pending"
       : "done";
 
@@ -338,7 +340,7 @@ export default function ProjectManager() {
               )}
 
               {/* Loading state while waiting */}
-              {deptNodes.length === 0 && !summary && (
+              {deptNodes.length === 0 && !summary && project.status !== "failed" && (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <Loader2 size={32} className="animate-spin text-primary mb-4" />
                   <p className="text-sm text-muted">
@@ -348,6 +350,44 @@ export default function ProjectManager() {
                     This usually takes 5–15 seconds
                   </p>
                 </div>
+              )}
+
+              {/* Failed state: zero departments completed */}
+              {deptNodes.length === 0 && !summary && project.status === "failed" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="p-6 rounded-2xl bg-surface border border-error/20 text-center"
+                >
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-error/10 flex items-center justify-center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-error">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="15" y1="9" x2="9" y2="15" />
+                      <line x1="9" y1="9" x2="15" y2="15" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-medium text-error mb-1">
+                    No department tasks completed successfully.
+                  </p>
+                  <p className="text-xs text-muted">
+                    The project manager was unable to create tasks for the selected departments.
+                    This may be due to a database configuration issue — check the edge function logs for details.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setProject(null);
+                      setEvents([]);
+                      setSummary(null);
+                      setDeptNodes([]);
+                      if (pollRef.current) clearInterval(pollRef.current);
+                      if (subRef.current) subRef.current.unsubscribe();
+                    }}
+                    className="mt-4 text-sm text-primary hover:underline cursor-pointer"
+                  >
+                    Try again
+                  </button>
+                </motion.div>
               )}
 
               {/* Completed state */}
