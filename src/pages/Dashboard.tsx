@@ -51,7 +51,7 @@ export default function Dashboard() {
           </h1>
         </div>
         <p className="text-muted text-sm max-w-xl">
-          your ai workforce
+         Your AI WorkForce. One Command away
         </p>
       </div>
 
