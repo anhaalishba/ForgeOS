@@ -25,6 +25,7 @@ export interface Task {
   status: "pending" | "in_progress" | "completed" | "failed";
   created_at: string;
   completed_at: string | null;
+  project_manager_task_id?: string | null;
 }
 
 export interface TaskOutput {
@@ -35,6 +36,20 @@ export interface TaskOutput {
   agent_role: string;
   content: string | null;
   status: "pending" | "working" | "completed" | "failed";
+  created_at: string;
+  completed_at: string | null;
+}
+
+// NEW: Project Manager task type
+export interface ProjectManagerTask {
+  id: string;
+  user_id: string;
+  goal: string;
+  departments: string[];
+  reasoning: string | null;
+  department_task_ids: Record<string, string> | null;
+  status: "pending" | "in_progress" | "completed" | "failed";
+  final_report: string | null;
   created_at: string;
   completed_at: string | null;
 }
