@@ -5,24 +5,21 @@ import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Department from "./pages/Department";
+import ProjectManager from "./pages/ProjectManager";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<boolean | null>(null);
-
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(!!session);
     });
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(!!session);
     });
-
     return () => subscription.unsubscribe();
   }, []);
-
   if (session === null) {
     return (
       <div className="min-h-screen bg-base flex items-center justify-center">
@@ -30,11 +27,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-
   if (!session) {
     return <Navigate to="/login" replace />;
   }
-
   return <Layout>{children}</Layout>;
 }
 
@@ -56,6 +51,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Department />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/project-manager"
+          element={
+            <ProtectedRoute>
+              <ProjectManager />
             </ProtectedRoute>
           }
         />
