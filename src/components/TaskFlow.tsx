@@ -75,7 +75,11 @@ export default function TaskFlow({ task, agents, departmentColor }: TaskFlowProp
     return {
       agent,
       output: output?.content ?? null,
-      status: (output?.status as "idle" | "working" | "completed" | "failed") ?? "idle",
+      status: !output
+  ? "idle"
+  : output.status === "pending"
+  ? "idle"
+  : (output.status as "idle" | "working" | "completed" | "failed"),
       index: i,
     };
   });
