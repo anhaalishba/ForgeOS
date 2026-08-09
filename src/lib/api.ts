@@ -107,3 +107,60 @@ export async function getAgents(departmentId: string): Promise<Agent[]> {
   if (error) throw error;
   return data;
 }
+// ── ADD THESE to your existing lib/api.ts (keep all existing functions as-is) ──
+
+import type { ProjectManagerTask } from "./departments";
+
+export async function submitProjectManagerGoal(goal: string): Promise<{
+  projectManagerTaskId: string;
+  departments: string[];
+  reasoning: string;
+  departmentTaskIds: Record<string, string>;
+}> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase.functions.invoke("project-manager", {
+    body: { goal },
+  });
+
+  if (error) {
+    console.error("Project Manager invoke error:", error);
+    throw new Error("Project Manager could not process this goal. Please try again.");
+  }
+
+  if (data?.error) {
+    throw new Error(data.error);
+  }
+
+  return data;
+}
+
+export async function getProjectManagerTask(id: string): Promise<ProjectManagerTask> {
+  const { data, error } = await supabase
+    .from("project_manager_tasks")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getAllProjectManagerTasks(): Promise<ProjectManagerTask[]> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from("project_manager_tasks")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
