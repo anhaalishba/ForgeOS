@@ -185,8 +185,8 @@ export default function AgentCard({
     },
   };
 
-  const { icon: StatusIcon, className: statusClass, bg, label } =
-    statusConfig[status];
+ const { icon: StatusIcon, className: statusClass, bg, label } =
+    statusConfig[status] ?? statusConfig.idle;
 
   const hasOutput = !!output && status === "completed";
 
