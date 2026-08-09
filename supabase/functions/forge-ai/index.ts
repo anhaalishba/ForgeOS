@@ -150,174 +150,142 @@ Numbered phases with estimated effort (in story points or days).
 The 2 biggest technical risks and mitigation approaches.
 
 IMPORTANT: Be specific about technologies, versions, and patterns. If the goal mentions a fitness app, design a real mobile + backend architecture with realistic choices. Use current tech (2024+). Do not be vague.`,
-};
 
-// ─── Fallback templates (used when OpenAI is unavailable) ─────────────
+  "Content Writer":
+    `You are a senior content writer in a corporate AI workflow platform called ForgeOS. You produce a **Content Plan** with an actual blog post draft and social captions — real, specific, well-written copy, not a template with the goal text pasted in.
 
-const FALLBACK_TEMPLATES: Record<string, string[]> = {
-  "Lead": [
-    `## Executive Summary
-The initiative presents a significant opportunity to drive measurable impact through focused execution and cross-functional alignment.
+Your response MUST use Markdown formatting and include these sections:
 
-## Key Priorities
-- **Priority 1:** Establish clear success metrics and reporting cadence within the first sprint
-- **Priority 2:** Align stakeholders across departments with a RACI matrix and weekly sync
-- **Priority 3:** Identify and mitigate the top 3 risks before scaling investment
+## Blog Post Draft
+- **Title:** A specific, compelling headline (not "The Future of [goal]")
+- **Introduction:** 2-3 genuinely engaging sentences that hook the reader
+- **Key Sections:** 3 real subheadings with a sentence describing what each covers
+- **Conclusion:** A strong closing with a clear takeaway
 
-## Success Metrics
-| Metric | Target | Timeline |
-|--------|--------|----------|
-| North Star metric | +15% improvement | Q2 |
-| Leading indicator | Baseline established | Week 2 |
-| Cost efficiency | Within 10% of budget | Ongoing |
+## Social Captions
+- **LinkedIn:** A professional, insight-driven caption (2-3 sentences)
+- **Twitter/X:** A punchy, scroll-stopping caption (under 280 characters)
+- **Instagram:** A casual, visual-first caption with relevant emoji
 
-## Recommendation
-Launch with a 2-week pilot, measure rigorously, and decide on full investment based on data — not intuition.`,
-  ],
-  "Strategy": [
-    `## Market Opportunity
-The addressable market is evolving rapidly, with incumbents showing vulnerability in user experience and new entrants driving innovation at the low end.
+IMPORTANT: Never insert the raw goal text into a title or sentence as filler (e.g. never write "The Future of [goal text]"). Invent a real angle, real headline, and real voice specific to the product or initiative in the goal.`,
 
-## Target Audience
-- **Primary persona:** The "efficiency seeker" — values speed, clear ROI, and minimal learning curve. Currently underserved by existing solutions.
-- **Secondary persona:** The "early adopter" — wants the newest approach, willing to tolerate rough edges for competitive advantage.
+  "SEO Expert":
+    `You are a senior SEO strategist in a corporate AI workflow platform called ForgeOS. You produce an **SEO Strategy** with real keyword research and a content cluster plan.
 
-## Competitive Positioning
-| Competitor | Strength | Weakness | Our Advantage |
-|------------|----------|----------|---------------|
-| Market Leader | Brand trust | Slow innovation | Speed to market |
-| Disruptor X | Modern UX | Limited features | Full-feature parity |
-| Legacy Option | Enterprise deals | Technical debt | Modern stack |
+Your response MUST use Markdown formatting and include these sections:
 
-## Channel Strategy
-1. **Content-led growth** — highest ROI for B2B consideration
-2. **Product Hunt / community launch** — credibility and early adopters
-3. **Outbound to mid-market** — personalized demos for 50–200 seat companies
+## Primary Keywords
+| Keyword | Intent | Volume | Difficulty |
+|---------|--------|--------|------------|
+Include 5 realistic, specific keyword phrases relevant to the goal's domain — not the goal text with generic suffixes appended.
 
-## Risk Assessment
-- **Adoption risk:** Mitigate with freemium tier and 30-day onboarding support
-- **Competitive response:** Move fast on the feature differentiators that are hardest to copy`,
-  ],
-  "Analyst": [
-    `## Data Summary
-Analysis of user behavior data across 12 weeks (n=45,000 users) segmented by engagement level, acquisition channel, and feature adoption.
+## On-Page SEO Checklist
+A checklist of 5-7 concrete on-page SEO tasks.
 
-## Key Findings
-| Insight | Impact | Confidence |
-|---------|--------|------------|
-| Power users (top 10%) drive 60% of total value | High | High |
-| Organic acquisition has 3.2x better retention than paid | High | High |
-| Feature discovery drop-off at day 7 is the largest leak | High | Medium |
+## Meta Title Options
+2 specific, compelling meta title options under 60 characters.
 
-## Metric Deep-Dive
-- **7-day retention:** 34% (benchmark: 28%) — above average, but day-7 cliff suggests onboarding gap
-- **Feature adoption rate:** 22% of users try >3 features — upsell opportunity at the 3-feature threshold
-- **Churn predictor:** Users who don't invite a teammate within 48 hours churn at 4x the rate
+## Content Cluster Strategy
+A pillar topic and 5 cluster subtopics genuinely relevant to the goal's domain.
 
-## Recommendations
-1. Redesign onboarding to drive a collaborative action within the first session
-2. Build a "power user" nurture track with advanced feature discovery
-3. Shift 20% of paid acquisition budget to content/SEO based on retention data
+IMPORTANT: Invent realistic keyword phrases a real user would search — do not just append "strategy", "how to", "examples" to the raw goal text.`,
 
-## Data Limitations
-- Segmentation excludes users with <1 session (bounce traffic)
-- Attribution windows are 7-day click, 1-day view — may undercount brand influence`,
-  ],
-  "Creative": [
-    `## Creative Concept
-**"Unlock Your Rhythm"** — A campaign that positions the product not as a tool but as the key to finding your natural workflow. Visuals contrast chaotic, fragmented work life with the calm focus the product enables.
+  Designer:
+    `You are a senior brand/product designer in a corporate AI workflow platform called ForgeOS. You produce a **Design Brief** with real, specific visual direction.
 
-## Headline Options
-- **Option A:** "Stop fighting your tools. Start finding your flow."
-- **Option B:** "The 10 minutes that save you 10 hours."
-- **Option C:** "Work doesn't have to feel like work."
+Your response MUST use Markdown formatting and include these sections:
 
 ## Visual Direction
-Warm neutrals (stone, sand, clay) with a single vibrant accent (electric blue). Photography: candid, shallow depth-of-field shots of real people in real workspaces — no stock-photo perfection. Typography: generous whitespace, one serif headline font paired with a clean geometric sans-serif for body.
+A specific mood and 3-4 descriptive keywords (not generic terms like "clean" or "modern" alone — pair them with something distinctive).
 
-## Messaging Pillars
-| Pillar | Key Message | Proof Point |
-|--------|-------------|-------------|
-| Speed | Get more done in less time | Average user saves 8 hrs/week |
-| Clarity | One place for everything | 94% reduction in tool-switching |
-| Control | You set the rules | Customizable workflows, no coding |
+## Color Palette
+5 colors with real hex codes and a short label for each (Primary, Secondary, Accent, Neutral 1, Neutral 2), chosen to fit the goal's domain and tone.
 
-## Content Formats
-1. **"Flow State" video series** — 5× 90-second documentary-style profiles of real users
-2. **Interactive ROI calculator** — embeddable tool showing time/cost savings
-3. **Weekly productivity newsletter** — curated tips with product tie-ins, not overt ads`,
-  ],
-  "Engineering": [
-    `## Architecture Overview
-A serverless-first architecture with event-driven communication between bounded contexts. This provides cost efficiency at low scale, automatic horizontal scaling, and clean domain boundaries that enable independent team velocity.
+## Typography System
+Specific font pairings (a real heading font + body font, e.g. "Cabinet Grotesk Bold" + "Inter") with size specs.
 
-## Tech Stack Recommendation
-| Layer | Technology | Rationale |
-|-------|-----------|-----------|
-| Frontend | React 19 + TypeScript | Ecosystem maturity, hiring pool |
-| Backend | Node.js + Fastify | Performance, TypeScript alignment |
-| Database | PostgreSQL (managed) | Reliability, full-text search, JSONB |
-| Infrastructure | AWS via SST | Infrastructure-as-code, serverless |
+## Layout Structure
+A numbered list of 4-5 sections a landing page or key screen should have, with a one-line description of each.
 
-## API Design
-\`\`\`
-POST /api/v1/submissions
-Authorization: Bearer <token>
-{
-  "goal": "string",
-  "department_id": "uuid",
-  "agents": ["uuid"]
-}
-→ 201 { "task_id": "uuid", "status": "processing" }
-\`\`\`
+## Asset Specs
+Concrete image/icon dimensions and style notes.
 
-## Data Model
-- **tasks** (id, goal, department_id, status, created_at, completed_at)
-- **task_outputs** (id, task_id, agent_id, status, content, completed_at)
-- **agents** (id, name, role, department_id, avatar_letter)
+IMPORTANT: Make the palette and direction feel specific to the actual product/domain in the goal, not a generic default SaaS look.`,
 
-## Implementation Plan
-1. **Sprint 1 (2 weeks):** Core task submission, agent pipeline, output persistence
-2. **Sprint 2 (1.5 weeks):** Real-time updates via WebSocket, UI polish
-3. **Sprint 3 (1 week):** Error handling, retry logic, monitoring dashboards
+  "Ads Manager":
+    `You are a senior paid media manager in a corporate AI workflow platform called ForgeOS. You produce an **Ad Campaign Brief** with real ad copy and targeting.
 
-## Technical Risks
-- **LLM latency:** Use streaming responses and optimistic UI to feel instant
-- **Concurrency limits:** Queue tasks and process with backpressure; set user expectations`,
-  ],
+Your response MUST use Markdown formatting and include these sections:
+
+## Google Ads Copy
+3 headlines (max 30 characters each) and one description (max 90 characters) — genuinely specific to the goal's product/domain.
+
+## Social Ads
+A Facebook/Instagram ad caption and a LinkedIn sponsored post caption, each with a distinct angle.
+
+## Targeting Parameters
+Specific, realistic targeting: age range, interests or job titles, and geography assumptions.
+
+## Budget Recommendation
+A realistic testing-phase and scaling-phase monthly budget split across channels, with percentages.
+
+## KPIs to Track
+4-5 specific KPI targets (CTR, CPA, ROAS, CPL) with realistic target numbers for this domain.
+
+IMPORTANT: Write real, specific ad headlines — do not just prepend "Get" or paste the raw goal text as a headline.`,
+
+  "Analytics Agent":
+    `You are a senior marketing/growth analyst in a corporate AI workflow platform called ForgeOS. You produce a **Performance Dashboard** report with realistic, internally-consistent numbers.
+
+Your response MUST use Markdown formatting and include these sections:
+
+## Executive Summary
+1-2 sentences summarizing overall performance versus projections.
+
+## KPI Scorecard
+| Metric | Current | Target | Status |
+|--------|---------|--------|--------|
+Include 5 rows (Impressions, CTR, Conversions, CPA, ROAS) with realistic, internally consistent numbers (e.g. CPA should roughly equal Spend/Conversions).
+
+## Channel Breakdown
+| Channel | Spend | Clicks | Conv | CPA | Revenue | ROAS |
+|---------|-------|--------|------|-----|---------|------|
+Include 3 channels plus a TOTAL row, with numbers that add up correctly.
+
+## Insights
+3 specific, actionable insights based on the numbers above — not generic statements.
+
+IMPORTANT: Keep all numbers mathematically consistent (CPA = Spend / Conversions, ROAS = Revenue / Spend). Do not use round, obviously fake numbers everywhere.`,
+};
+
+// ─── Fallback templates (used only if the AI API call genuinely fails) ─
+
+const FALLBACK_TEMPLATES: Record<string, string[]> = {
   "default": [
     `## Summary
-Analysis complete. Below are the structured findings.
+We were unable to generate a full AI response for this task right now.
 
-## Key Points
-- Primary finding with supporting context
-- Secondary insight with actionable implication
-- Risk or consideration worth noting
+## What happened
+The AI provider call failed (see function logs for the exact error — likely an invalid API key, wrong model name, or rate limit).
 
 ## Next Steps
-1. Review the recommendations with stakeholders
-2. Prioritize based on impact vs. effort
-3. Schedule follow-up within 2 weeks to track progress`,
+1. Check the AIML_API_KEY secret is set correctly in Supabase Edge Function secrets
+2. Check the function logs for the specific error message
+3. Retry this task once the issue is fixed`,
   ],
 };
 
 function generateFallback(role: string, goal: string): string {
   const templates = FALLBACK_TEMPLATES[role] || FALLBACK_TEMPLATES["default"];
   const template = templates[Math.floor(Math.random() * templates.length)];
-  // Insert the goal into a contextual spot if present, otherwise just return the template
-  return template.replace(
-    "The initiative",
-    `**${goal}**`
-  );
+  return template.replace("this task", `"${goal}"`);
 }
 
 function buildSystemPrompt(agent: AgentInput): string {
-  // Use role-specific prompt if available, otherwise a generic one
   if (ROLE_SYSTEM_PROMPTS[agent.role]) {
     return ROLE_SYSTEM_PROMPTS[agent.role];
   }
 
-  // Generic prompt for unknown roles — still much better than before
   return `You are ${agent.name}, a ${agent.role} in a corporate AI workflow platform called ForgeOS. You produce professional, well-structured outputs using Markdown formatting.
 
 Your response MUST use Markdown and include clear sections with ## headings, bullet points, and a table where appropriate. Be specific — invent realistic details relevant to the goal. Do not repeat the goal text as filler. Write at least 150 words of genuinely useful content.`;
@@ -350,21 +318,25 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+
+    // AI/ML API is OpenAI-compatible — same request/response shape, different base URL + key.
+    const aimlKey = Deno.env.get("AIML_API_KEY");
+    const AIML_BASE_URL = "https://api.aimlapi.com/v1/chat/completions";
+    const AIML_MODEL = "gpt-4o-mini"; // change if you want a different AI/ML API model
 
     for (const agent of agents) {
       let content: string;
 
-      if (openaiKey) {
+      if (aimlKey) {
         try {
-          const response = await fetch("https://api.openai.com/v1/chat/completions", {
+          const response = await fetch(AIML_BASE_URL, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${openaiKey}`,
+              Authorization: `Bearer ${aimlKey}`,
             },
             body: JSON.stringify({
-              model: "gpt-4o-mini",
+              model: AIML_MODEL,
               messages: [
                 { role: "system", content: buildSystemPrompt(agent) },
                 { role: "user", content: buildUserPrompt(agent, goal) },
@@ -376,7 +348,7 @@ Deno.serve(async (req: Request) => {
 
           if (!response.ok) {
             const errText = await response.text();
-            console.error(`OpenAI error for agent ${agent.id} (${agent.role}): ${response.status} — ${errText.slice(0, 200)}`);
+            console.error(`AI/ML API error for agent ${agent.id} (${agent.role}): ${response.status} — ${errText.slice(0, 300)}`);
             content = generateFallback(agent.role, goal);
           } else {
             const json = await response.json();
@@ -384,20 +356,19 @@ Deno.serve(async (req: Request) => {
             if (raw && raw.length > 20) {
               content = raw;
             } else {
-              console.warn(`OpenAI returned short/empty output for ${agent.role}, using fallback`);
+              console.warn(`AI/ML API returned short/empty output for ${agent.role}, using fallback`);
               content = generateFallback(agent.role, goal);
             }
           }
         } catch (fetchErr) {
-          console.error(`OpenAI fetch failed for ${agent.role}:`, fetchErr);
+          console.error(`AI/ML API fetch failed for ${agent.role}:`, fetchErr);
           content = generateFallback(agent.role, goal);
         }
       } else {
         content = generateFallback(agent.role, goal);
-        console.log(`No OPENAI_API_KEY set — using fallback for ${agent.role}`);
+        console.log(`No AIML_API_KEY set — using fallback for ${agent.role}`);
       }
 
-      // Update the task_output
       const { error: updateError } = await supabase
         .from("task_outputs")
         .update({
@@ -413,7 +384,6 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Mark the task as completed
     await supabase
       .from("tasks")
       .update({ status: "completed", completed_at: new Date().toISOString() })
