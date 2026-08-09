@@ -57,7 +57,7 @@ export default function Login() {
             Forge<span className="text-primary">OS</span>
           </h1>
           <p className="text-muted text-sm mt-2">
-            Your AI Workforce, One Command Away
+            your ai workforce
           </p>
         </div>
 
